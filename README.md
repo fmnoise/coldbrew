@@ -2,7 +2,7 @@
 
 Easy to use Clojure wrappers for [Caffeine](https://github.com/ben-manes/caffeine)
 
-<p align="center"><img src="https://user-images.githubusercontent.com/4033391/138502127-52beb2a4-43c0-4650-9a96-27c4e9c47398.png" width="200"></p>
+<p align="center"><img src="https://user-images.githubusercontent.com/4033391/138520795-69732f8a-3790-4a2c-84e5-aa75fe7f626d.png" width="200"></p>
 
 ## Usage
 
@@ -81,7 +81,7 @@ Alpha. Not used in production yet. Breaking changes are possible.
 
 ## Credits
 
-Coldbrew icon made by [Eucalyp](https://www.flaticon.com/authors/eucalyp)
+Coldbrew icon made by [Freepik](https://www.freepik.com) from [Flaticon](https://www.flaticon.com)
 
 ## License
 

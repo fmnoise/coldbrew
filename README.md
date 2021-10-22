@@ -1,6 +1,8 @@
 # coldbrew [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.fmnoise/coldbrew.svg)](https://clojars.org/org.clojars.fmnoise/coldbrew)
 
-Clojure caching tools built on [Caffeine](https://github.com/ben-manes/caffeine)
+Easy to use Clojure wrappers for [Caffeine](https://github.com/ben-manes/caffeine)
+
+<p align="center"><img src="https://user-images.githubusercontent.com/4033391/138502127-52beb2a4-43c0-4650-9a96-27c4e9c47398.png" width="200"></p>
 
 ## Usage
 
@@ -65,6 +67,10 @@ Due to defn-like declaration it's very easy to refactor existing `defn` to cache
 ## Disclaimer
 
 Same as consuming coldbrew drink in reality, make sure you don't exceed recommended coffeine amount, as each `cached-fn` and `defcached` creates separate Caffeine Loading Cache instance. Also make sure you understand risk of memory leaks when caching large objects or collections.
+
+## Credits
+
+Coldbrew icon made by [Eucalyp](https://www.flaticon.com/authors/eucalyp)
 
 ## License
 

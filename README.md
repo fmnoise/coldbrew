@@ -11,7 +11,7 @@ Easy to use Clojure wrappers for [Caffeine](https://github.com/ben-manes/caffein
 ```
 
 Let's create a cached function with cache expiration time 1 hour(3600 sec).
-Cache options are passed as meta to cached function. Supported options are:
+Cache options are passed as meta for cached function. Supported options are:
 - `:expire`, uses [expireAfterWrite](https://github.com/ben-manes/caffeine/wiki/Eviction#time-based)
 - `:refresh`, uses [refreshAfterWrite](https://github.com/ben-manes/caffeine/wiki/Refresh)
 
@@ -43,9 +43,7 @@ There's also a macro to define cached function:
   (http/get (str base-url "/customer/" id)) ;; function body
 ```
 
-All meta passed to function name is preserved, so you can have private cached function and add docstring.
-
-*NB: Docstring is only supported as meta to function var*
+All meta passed to function name is preserved, so you can have private cached function and add docstring:
 
 ```clojure
 (defcached
@@ -57,9 +55,11 @@ All meta passed to function name is preserved, so you can have private cached fu
   (http/get (str base-url "/customer/" id))
 ```
 
+*NB: Docstring is only supported as meta to function var*
+
 Due to defn-like declaration it's very easy to refactor existing `defn` to cached function using `defcached` macro:
-1. Rename `defn` to `defcached`
-2. Add cache key vector before body (names should correspond with function args) with optional meta for expiration/refreshing
+1. Change `defn` to `defcached`
+2. Add cache key vector before function body (names should correspond with function args) with optional meta for expiration/refreshing
 3. That's it!
 
 *NB: If you later decide to return back to `defn` and forget to remove cache key, nothing will break.*

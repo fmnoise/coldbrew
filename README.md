@@ -67,7 +67,7 @@ All meta passed to function name is preserved, so we can have private cached fun
 Due to defn-like declaration it's very easy to refactor existing `defn` to cached function using `defcached` macro:
 1. Change `defn` to `defcached`
 2. Add cache key vector before function body (names should correspond with function args) with optional meta for expiration/refreshing
-3. That's it!
+3. That's it! :tada:
 
 *NB: If you later decide to return back to `defn` and forget to remove cache key, nothing will break.*
 

@@ -2,7 +2,6 @@
 
 Clojure caching tools built on [Caffeine](https://github.com/ben-manes/caffeine)
 
-
 ## Usage
 
 ```clojure
@@ -62,6 +61,10 @@ Due to defn-like declaration it's very easy to refactor existing `defn` to cache
 3. That's it!
 
 *NB: If you later decide to return back to `defn` and forget to remove cache key, nothing will break.*
+
+## Disclaimer
+
+Same as consuming coldbrew drink in reality, make sure you don't exceed recommended coffeine amount, as each `cached-fn` and `defcached` creates separate Caffeine Loading Cache instance. Also make sure you understand risk of memory leaks when caching large objects or collections.
 
 ## License
 

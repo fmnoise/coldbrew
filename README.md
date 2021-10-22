@@ -73,7 +73,7 @@ Due to defn-like declaration it's very easy to refactor existing `defn` to cache
 
 ## Disclaimer
 
-Same as consuming [cold brew coffee](https://en.wikipedia.org/wiki/List_of_coffee_drinks#Cold_brew), make sure you don't exceed recommended caffeine amount, as each call to `cached` creates separate Caffeine Loading Cache instance. Also make sure you understand risk of memory leaks when caching large objects or collections.
+Same as consuming [cold brew coffee](https://en.wikipedia.org/wiki/List_of_coffee_drinks#Cold_brew), make sure you don't exceed recommended caffeine amount, as each call to `cached` creates separate Caffeine Loading Cache instance. Also make sure you understand the risk of memory leaks when caching large objects or collections.
 
 ## Credits
 

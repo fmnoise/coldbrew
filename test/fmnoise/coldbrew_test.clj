@@ -1,12 +1,12 @@
 (ns fmnoise.coldbrew-test
   (:require [clojure.test :refer [deftest is]]
-            [fmnoise.coldbrew :refer [defcached cached-fn]]))
+            [fmnoise.coldbrew :refer [defcached cached]]))
 
 (def counter (atom nil))
 
 (deftest cached-fn-test
   (let [_ (reset! counter 0)
-        cf (cached-fn (with-meta (fn [a b] (swap! counter inc) (+ a b)) {:expire 3}))
+        cf (cached (with-meta (fn [a b] (swap! counter inc) (+ a b)) {:expire 3}))
         r1 (cf 1 2)
         c1 @counter
         r2 (cf 1 2)

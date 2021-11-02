@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.1 - 2021-11-02
+
+* Fix `defcached` implementation
+
 ## 0.2.0 - 2021-10-22
 
 * **BREAKING!** `cached-fn` renamed to `cached`

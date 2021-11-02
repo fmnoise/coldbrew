@@ -34,14 +34,13 @@
    (query-customer-ltv db date id))
   ```"
   [name args cache-key & fn-body]
-  `(do
-     (def ^:private cached#
-       (cached
-        (with-meta
-          (fn [~@cache-key]
-            ~@fn-body)
-          ~(meta cache-key))))
-     (defn ~name
-       ~args
-       (cached# ~@cache-key))
-     (vary-meta ~name merge ~(meta name))))
+  (let [fname (gensym (str name "-cached-"))]
+    `(do
+      (def ^:private ~fname
+         (cached
+          (with-meta
+            (fn [~@cache-key]
+              ~@fn-body)
+            ~(meta cache-key))))
+      (defn ~name ~args (~fname ~@cache-key))
+      (vary-meta ~name merge ~(meta name)))))

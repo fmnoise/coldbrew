@@ -90,7 +90,7 @@ Same as consuming [cold brew coffee](https://en.wikipedia.org/wiki/List_of_coffe
 
 ## Status
 
-Alpha. Not used in production yet. Breaking changes are possible.
+Early adopting. Breaking changes are possible.
 
 ## Credits
 

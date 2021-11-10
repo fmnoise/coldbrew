@@ -12,8 +12,9 @@ Easy to use Clojure wrappers for [Caffeine](https://github.com/ben-manes/caffein
 
 The main building block is `cached` function which accepts function and returns cached version of it.
 Cache options are passed as meta attached to function. Supported options are:
-- `:expire`, uses [expireAfterWrite](https://github.com/ben-manes/caffeine/wiki/Eviction#time-based)
-- `:refresh`, uses [refreshAfterWrite](https://github.com/ben-manes/caffeine/wiki/Refresh)
+- `:expire` : expiration time (in seconds), uses [expireAfterWrite](https://github.com/ben-manes/caffeine/wiki/Eviction#time-based)
+- `:refresh` : refresh time (in seconds), uses [refreshAfterWrite](https://github.com/ben-manes/caffeine/wiki/Refresh)
+- `:when` : function for performing conditional caching (value is cached only if function returns truthy value)
 
 Let's create a cached function with expiration time 1 hour (3600 sec):
 ```clojure
@@ -32,6 +33,18 @@ We can achieve same result using anonymous function:
      (fn [base-url id]
        (http/get (str base-url "/customers/" id))
      {:expire 3600})))
+```
+
+We can also configure that value should be cached only when it satisfied condition:
+```clojure
+;; tasks can be only added to worker and capacity can only decrease
+;; so it makes sense to cache value when capacity reaches 0
+(def worker-tasks-capacity
+  (cached
+    (with-meta
+    (fn [db worker-id date]
+      (some-expensive-query db worker-id date)
+      {:when zero?})))
 ```
 
 There's also more flexible `defcached` macro which uses `cached` under the hood.

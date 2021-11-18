@@ -29,14 +29,14 @@
                 (.build cache-builder (reify CacheLoader (load [_ key] (apply f key)))))]
     (if condition-fn
       (fn [& args]
-        (let [key (or args ::nil)]
+        (let [key (or args [])]
           (or (.getIfPresent ^Cache cache key)
               (let [computed (apply f args)]
                 (when (condition-fn computed)
                   (.put ^Cache cache key computed))
                 computed))))
       (fn [& args]
-        (.get ^LoadingCache cache args)))))
+        (.get ^LoadingCache cache (or args []))))))
 
 (defmacro defcached
   "Creates a function which uses Caffeine Loading Cache under the hood.

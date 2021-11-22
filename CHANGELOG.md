@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.3 - 2021-11-22
+
+* Fix zero-arity functions caching
+
 ## 0.2.2 - 2021-11-10
 
 * Conditional caching

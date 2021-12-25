@@ -52,14 +52,29 @@
    [db date id]
    (query-customer-ltv db date id))
   "
-  [name args cache-key & fn-body]
-  (let [fname (gensym (str name "-cached-"))]
+  [name & fdecl]
+  (let [fname (gensym (str name "-cached-"))
+        [?docstring ?args ?prepost ?cache-key] fdecl
+        docstring (when (string? ?docstring) ?docstring)
+        args (if docstring ?args ?docstring)
+        prepost (cond
+                  (and docstring (map? ?prepost)) ?prepost
+                  (and (nil? docstring) (map? ?args)) ?args)
+        cache-key (cond
+                    (and docstring prepost) ?cache-key
+                    (and (nil? docstring) (nil? prepost)) ?args
+                    :else ?prepost)
+        body (nthrest fdecl (cond
+                              (and docstring prepost) 4
+                              (and (nil? docstring) (nil? prepost)) 2
+                              :else 3))
+        fdefn (filter some? (list name docstring args prepost))]
     `(do
       (def ^:private ~fname
          (cached
           (with-meta
             (fn [~@cache-key]
-              ~@fn-body)
+              ~@body)
             ~(meta cache-key))))
-      (defn ~name ~args (~fname ~@cache-key))
+      (defn ~@fdefn (~fname ~@cache-key))
       (vary-meta ~name merge ~(meta name)))))

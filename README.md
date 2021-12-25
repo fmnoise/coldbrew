@@ -75,7 +75,19 @@ All meta passed to function name is preserved, so we can have private cached fun
       result)))
 ```
 
-*NB: Docstring is only supported as meta*
+Positional docstring as well as pre/post conditions map are also supported:
+```clojure
+(defcached fetch-customer-impl
+  "Fetches customer data by given id"
+  [{:keys [base-url timeout]} id]
+  {:pre [(string? base-url) (pos? timeout) (some? id)]}
+  ^{:expire 3600}
+  [id]
+  (let [result (deref (http/get (str base-url "/customer/" id)) timeout ::timeout)]
+    (if (= result ::timeout)
+      (throw (ex-info "Request timed out" {:id id}))
+      result)))
+```
 
 Due to defn-like declaration it's very easy to refactor existing `defn` to cached function using `defcached` macro:
 1. Change `defn` to `defcached`

@@ -4,7 +4,7 @@
 
 (defn cached
   "Accepts a function and creates cached version of it which uses Caffeine Loading Cache.
-  Cache options should can be provided as meta to function. Supported options are:
+  Cache options can be provided as meta to function. Supported options are:
   `:expire` - expiration time (in seconds)
   `:refresh` - refresh time (in seconds)
   `:when` - function for checking if value should be cached

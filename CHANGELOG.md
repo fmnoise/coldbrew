@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.0 - 2021-12-31
+
+* Add positional docstring and pre/post conditions to defcached
+
 ## 0.2.3 - 2021-11-22
 
 * Fix zero-arity functions caching

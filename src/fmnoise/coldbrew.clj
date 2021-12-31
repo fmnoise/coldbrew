@@ -42,7 +42,9 @@
   "Creates a function which uses Caffeine Loading Cache under the hood.
   Function declaration is similar to defn:
   - name (symbol) with optional meta
+  - docstring (optional)
   - args (vector)
+  - pre/post conditions map (optional)
   - caching key (vector) with optional meta containing cache options (see `cached` for more details)
   - body
 

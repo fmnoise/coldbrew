@@ -1,5 +1,3 @@
-# coldbrew [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.fmnoise/coldbrew.svg)](https://clojars.org/org.clojars.fmnoise/coldbrew)
-
 ### If you support my open source work, please consider donating Ukrainian Army in fighting with Russian agression. We stay for Freedom and peaceful future, let's stop Putin together! 🇺🇦 🙏
 ```
 IBAN - UA843000010000000047330992708
@@ -10,6 +8,8 @@ ETH - 0x165CD37b4C644C2921454429E7F9358d18A45e14
 
 USDT (trc20) - TEFccmfQ38cZS1DTZVhsxKVDckA8Y6VfCy
 ```
+
+# coldbrew [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.fmnoise/coldbrew.svg)](https://clojars.org/org.clojars.fmnoise/coldbrew)
 
 Easy to use Clojure wrappers for [Caffeine](https://github.com/ben-manes/caffeine)
 

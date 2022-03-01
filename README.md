@@ -21,9 +21,9 @@ Easy to use Clojure wrappers for [Caffeine](https://github.com/ben-manes/caffein
 
 The main building block is `cached` function which accepts function and returns cached version of it.
 Cache options are passed as meta attached to function. Supported options are:
-- `:expire` : expiration time (in seconds), uses [expireAfterWrite](https://github.com/ben-manes/caffeine/wiki/Eviction#time-based)
-- `:refresh` : refresh time (in seconds), uses [refreshAfterWrite](https://github.com/ben-manes/caffeine/wiki/Refresh)
-- `:when` : function for performing conditional caching (value is cached only if function returns truthy value)
+- `:expire` - expiration time (in seconds), uses [expireAfterWrite](https://github.com/ben-manes/caffeine/wiki/Eviction#time-based)
+- `:refresh` - refresh time (in seconds), uses [refreshAfterWrite](https://github.com/ben-manes/caffeine/wiki/Refresh)
+- `:when` - function for performing conditional caching (value is cached only if function returns truthy value)
 
 Let's create a cached function with expiration time 1 hour (3600 sec):
 ```clojure

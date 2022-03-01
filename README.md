@@ -39,9 +39,9 @@ We can achieve same result using anonymous function:
 (def cached-customer-fetch
   (cached
     (with-meta
-     (fn [base-url id]
-       (http/get (str base-url "/customers/" id))
-     {:expire 3600})))
+      (fn [base-url id]
+        (http/get (str base-url "/customers/" id)))
+      {:expire 3600})))
 ```
 
 We can also configure that value should be cached only when it satisfied condition:
@@ -51,8 +51,8 @@ We can also configure that value should be cached only when it satisfied conditi
 (def worker-tasks-capacity
   (cached
     (with-meta
-    (fn [db worker-id date]
-      (some-expensive-query db worker-id date)
+      (fn [db worker-id date]
+        (some-expensive-query db worker-id date))
       {:when zero?})))
 ```
 

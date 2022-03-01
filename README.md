@@ -111,7 +111,7 @@ Same as consuming [cold brew coffee](https://en.wikipedia.org/wiki/List_of_coffe
 
 ## Status
 
-Early adopting. Breaking changes are possible.
+Successful production usage 😎
 
 ## Credits
 

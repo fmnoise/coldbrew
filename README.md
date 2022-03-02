@@ -99,7 +99,7 @@ Positional docstring as well as `pre`/`post` conditions map are also supported:
       result)))
 ```
 
-Due to defn-like declaration it's very easy to refactor existing `defn` to cached functiosn using the `defcached` macro:
+Due to defn-like declaration it's very easy to refactor existing `defn` to cached function using the `defcached` macro:
 1. Change `defn` to `defcached`
 2. Add cache key vector before function body (names should correspond with function args) with optional metadata for expiration/refreshing
 3. That's it! :tada:

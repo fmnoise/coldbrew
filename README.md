@@ -25,7 +25,7 @@ Cache options are passed as meta attached to function. Supported options are:
 - `:refresh` - refresh time (in seconds), uses [refreshAfterWrite](https://github.com/ben-manes/caffeine/wiki/Refresh)
 - `:when` - function for performing conditional caching (value is cached only if function returns truthy value)
 
-Let's create a cached function with expiration time 1 hour (3600 sec):
+Let's create a cached function with expiration time of 1 hour (3600 sec):
 ```clojure
 (defn fetch-customer [base-url id]
   (http/get (str base-url "/customers/" id)))
@@ -34,7 +34,7 @@ Let's create a cached function with expiration time 1 hour (3600 sec):
   (cached (with-meta fetch-customer {:expire 3600})))
 ```
 
-We can achieve same result using anonymous function:
+We can achieve the same result using an anonymous function:
 ```clojure
 (def cached-customer-fetch
   (cached
@@ -44,7 +44,7 @@ We can achieve same result using anonymous function:
       {:expire 3600})))
 ```
 
-We can also configure that value should be cached only when it satisfied condition:
+We can also configure that the value should be cached only when it has satisfied a condition:
 ```clojure
 ;; tasks can be only added to worker and capacity can only decrease
 ;; so it makes sense to cache value when capacity reaches 0
@@ -56,8 +56,9 @@ We can also configure that value should be cached only when it satisfied conditi
       {:when zero?})))
 ```
 
-There's also more flexible `defcached` macro which uses `cached` under the hood.
-The main purpose of it is ability to build cache key from function agruments:
+There's also a more flexible `defcached` macro which uses `cached` under the hood.
+The main purpose of it is ability to build cache keys from function agruments:
+
 ```clojure
 (defcached fetch-customer ;; function name
   [{:keys [base-url timeout]} id] ;; function args
@@ -70,7 +71,7 @@ The main purpose of it is ability to build cache key from function agruments:
       result))
 ```
 
-All meta passed to function name is preserved, so we can have private cached function and add docstring:
+All meta passed to function name is preserved, so we can have private cached functions and add docstrings:
 ```clojure
 (defcached
   ^{:private true
@@ -84,7 +85,7 @@ All meta passed to function name is preserved, so we can have private cached fun
       result)))
 ```
 
-Positional docstring as well as pre/post conditions map are also supported:
+Positional docstring as well as `pre`/`post` conditions map are also supported:
 ```clojure
 (defcached fetch-customer-impl
   "Fetches customer data by given id"
@@ -98,9 +99,9 @@ Positional docstring as well as pre/post conditions map are also supported:
       result)))
 ```
 
-Due to defn-like declaration it's very easy to refactor existing `defn` to cached function using `defcached` macro:
+Due to defn-like declaration it's very easy to refactor existing `defn` to cached functiosn using the `defcached` macro:
 1. Change `defn` to `defcached`
-2. Add cache key vector before function body (names should correspond with function args) with optional meta for expiration/refreshing
+2. Add cache key vector before function body (names should correspond with function args) with optional metadata for expiration/refreshing
 3. That's it! :tada:
 
 *NB: If you later decide to return back to `defn` and forget to remove cache key, nothing will break.*

@@ -1,4 +1,5 @@
 (ns fmnoise.coldbrew
+  {:clj-kondo/config '{:lint-as {fmnoise.coldbrew/defached clojure.core/defn}}}
   (:import (com.github.benmanes.caffeine.cache Cache CacheLoader LoadingCache Caffeine)
            (java.time Duration)))
 

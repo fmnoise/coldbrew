@@ -6,9 +6,14 @@
 (defn cached
   "Accepts a function and creates cached version of it which uses Caffeine Loading Cache.
   Cache options can be provided as meta to function. Supported options are:
-  `:expire` - expiration time (in seconds)
+  `:expire` - expiration time after write (in seconds)
+  `:expire-after-access` - expiration time after access (in seconds)
   `:refresh` - refresh time (in seconds)
   `:when` - function for checking if value should be cached
+  `:max-size` - number, sets maximum cache size
+  `:weak-keys` - boolean, switch cache to using weak references for keys
+  `:weak-values` - boolean, switch cache to using weak references for values (can't be set together with `:soft-values`)
+  `:soft-values` - boolean, switch cache to using soft references for values (can't be set together with `:weak-values`)
 
   Examples:
   (cached ^{:expire 86400 :refresh 36000}
@@ -19,12 +24,24 @@
    (fn [db worker-id] (order-capacity db worker-id)))
   "
   [f]
-  (let [^Caffeine cache-builder (Caffeine/newBuilder)
+  (let [options (meta f)
+        {:keys [expire expire-after-access refresh max-size weak-keys weak-values soft-values]} options
         condition-fn (-> f meta :when)
-        _ (when-let [expire (-> f meta :expire)]
-            (.expireAfterWrite cache-builder (Duration/ofSeconds expire)))
-        _ (when-let [refresh (-> f meta :refresh)]
-            (.refreshAfterWrite cache-builder (Duration/ofSeconds refresh)))
+        ^Caffeine cache-builder (cond-> (Caffeine/newBuilder)
+                                  expire
+                                  (.expireAfterWrite (Duration/ofSeconds expire))
+                                  expire-after-access
+                                  (.expireAfterAccess (Duration/ofSeconds expire-after-access))
+                                  refresh
+                                  (.refreshAfterWrite (Duration/ofSeconds refresh))
+                                  max-size
+                                  (.maximumSize ^long max-size)
+                                  weak-keys
+                                  (.weakKeys)
+                                  weak-values
+                                  (.weakValues)
+                                  soft-values
+                                  (.softValues))
         cache (if condition-fn
                 (.build cache-builder)
                 (.build cache-builder (reify CacheLoader (load [_ key] (apply f key)))))]

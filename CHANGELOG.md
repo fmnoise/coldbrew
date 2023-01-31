@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.1.0 - 2023-01-31
+
+* Update defcached docstring
+* Add more caching options and perform basic validation
+
 ## 1.0.0 - 2021-12-31
 
 * Add positional docstring and pre/post conditions to defcached

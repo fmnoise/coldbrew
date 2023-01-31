@@ -1,7 +1,16 @@
 (ns fmnoise.coldbrew
   {:clj-kondo/config '{:lint-as {fmnoise.coldbrew/defached clojure.core/defn}}}
   (:import (com.github.benmanes.caffeine.cache Cache CacheLoader LoadingCache Caffeine)
-           (java.time Duration)))
+           (java.time Duration))
+  (:require [clojure.set :as set]
+            [clojure.string :as str]))
+
+(defn- check-cache-options [options]
+  (let [diff (set/difference (some-> options keys set) #{:expire :expire-after-access :refresh :when :max-size :weak-keys :weak-values :soft-values})]
+    (when (seq diff)
+      (throw (IllegalArgumentException. (str "Unsupported caching options: " (str/join "," diff))))))
+  (when (and (:soft-values options) (:weak-values options))
+    (throw (IllegalArgumentException. "Only soft-values or weak-values options can be used "))))
 
 (defn cached
   "Accepts a function and creates cached version of it which uses Caffeine Loading Cache.
@@ -25,6 +34,7 @@
   "
   [f]
   (let [options (meta f)
+        _ (check-cache-options options)
         {:keys [expire expire-after-access refresh max-size weak-keys weak-values soft-values]} options
         condition-fn (-> f meta :when)
         ^Caffeine cache-builder (cond-> (Caffeine/newBuilder)
@@ -84,6 +94,8 @@
                     (and docstring prepost) ?cache-key
                     (and (nil? docstring) (nil? prepost)) ?args
                     :else ?prepost)
+        cache-options (meta cache-key)
+        _ (check-cache-options cache-options)
         body (nthrest fdecl (cond
                               (and docstring prepost) 4
                               (and (nil? docstring) (nil? prepost)) 2
@@ -95,6 +107,6 @@
           (with-meta
             (fn [~@cache-key]
               ~@body)
-            ~(meta cache-key))))
+            ~cache-options)))
       (defn ~@fdefn (~fname ~@cache-key))
       (vary-meta ~name merge ~(meta name)))))

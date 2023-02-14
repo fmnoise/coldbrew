@@ -94,7 +94,7 @@
                     (and docstring prepost) ?cache-key
                     (and (nil? docstring) (nil? prepost)) ?args
                     :else ?prepost)
-        cache-options (meta cache-key)
+        cache-options (-> cache-key meta (dissoc :file :end-column :column :line :end-line))
         _ (check-cache-options cache-options)
         body (nthrest fdecl (cond
                               (and docstring prepost) 4

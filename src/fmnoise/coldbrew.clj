@@ -12,8 +12,11 @@
   (when (and (:soft-values options) (:weak-values options))
     (throw (IllegalArgumentException. "Only soft-values or weak-values options can be used "))))
 
+(defn- cache-loader ^CacheLoader [f]
+  (reify CacheLoader (load [_ key] (apply f key))))
+
 (defn build-cache
-  "Builds Caffeine Loading Cache with given options and optional cache loader. Supported options are:
+  "Builds Caffeine Loading Cache with given options and optional cache function. Supported options are:
   `:expire` - expiration time after write (in seconds)
   `:expire-after-access` - expiration time after access (in seconds)
   `:refresh` - refresh time (in seconds)
@@ -23,7 +26,7 @@
   `:weak-values` - boolean, switch cache to using weak references for values (can't be set together with `:soft-values`)
   `:soft-values` - boolean, switch cache to using soft references for values (can't be set together with `:weak-values`)
   "
-  [options & [loader]]
+  [options & [cache-fn]]
   (let [_ (check-cache-options options)
         {:keys [expire expire-after-access refresh max-size weak-keys weak-values soft-values]} options
         ^Caffeine cache-builder (cond-> (Caffeine/newBuilder)
@@ -41,8 +44,8 @@
                                   (.weakValues)
                                   soft-values
                                   (.softValues))]
-    (if loader
-      (.build cache-builder ^CacheLoader loader)
+    (if cache-fn
+      (.build cache-builder (cache-loader cache-fn))
       (.build cache-builder))))
 
 (defn fetch
@@ -71,8 +74,7 @@
   [f]
   (let [options (meta f)
         condition-fn (-> f meta :when)
-        loader (when-not condition-fn (reify CacheLoader (load [_ key] (apply f key))))
-        cache (build-cache options loader)]
+        cache (build-cache options (when-not condition-fn (cache-loader f)))]
     (fn [& args]
       (let [key (or args [])]
         (if condition-fn

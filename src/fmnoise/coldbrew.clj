@@ -76,7 +76,7 @@
   [f]
   (let [options (meta f)
         condition-fn (-> f meta :when)
-        cache (build-cache options (when-not condition-fn (cache-loader f)))]
+        cache (build-cache options (when-not condition-fn f))]
     (fn [& args]
       (let [key (or args [])]
         (if condition-fn

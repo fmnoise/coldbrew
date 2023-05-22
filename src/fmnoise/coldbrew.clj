@@ -49,9 +49,13 @@
       (.build cache-builder))))
 
 (defn lookup
-  "Performs cache lookup"
-  [^LoadingCache cache key]
-  (.get cache key))
+  "Performs cache lookup. Accepts optional 0-arity function to calculate missing value"
+  ([^LoadingCache cache key] (.get cache key))
+  ([^Cache cache key f]
+   (or (.getIfPresent cache key)
+       (let [computed (f)]
+         (.put cache key computed)
+         computed))))
 
 (defn cond-lookup
   "Performs cache lookup and conditional value computation if value is missing"

@@ -48,6 +48,8 @@
 (defn fetch
   "Performs cache lookup and optional conditional value computation if value is missing"
   ([^LoadingCache cache key] (.get cache key))
+  ([^Cache cache key computation-fn] (fetch cache key any? computation-fn nil))
+  ([^Cache cache key condition-fn computation-fn] (fetch cache key condition-fn computation-fn nil))
   ([^Cache cache key condition-fn computation-fn args]
    (or (.getIfPresent cache key)
        (let [computed (apply computation-fn args)]

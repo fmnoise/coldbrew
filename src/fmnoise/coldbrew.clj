@@ -48,17 +48,19 @@
       (.build cache-builder (cache-loader cache-fn))
       (.build cache-builder))))
 
-(defn fetch
-  "Performs cache lookup and optional conditional value computation if value is missing"
-  ([^LoadingCache cache key] (.get cache key))
-  ([^Cache cache key computation-fn] (fetch cache key any? computation-fn nil))
-  ([^Cache cache key condition-fn computation-fn] (fetch cache key condition-fn computation-fn nil))
-  ([^Cache cache key condition-fn computation-fn args]
-   (or (.getIfPresent cache key)
-       (let [computed (apply computation-fn args)]
-         (when (condition-fn computed)
-           (.put cache key computed))
-         computed))))
+(defn lookup
+  "Performs cache lookup"
+  [^LoadingCache cache key]
+  (.get cache key))
+
+(defn cond-lookup
+  "Performs cache lookup and conditional value computation if value is missing"
+  [^Cache cache key condition-fn computation-fn & [args]]
+  (or (.getIfPresent cache key)
+      (let [computed (apply computation-fn args)]
+        (when (condition-fn computed)
+          (.put cache key computed))
+        computed)))
 
 (defn cached
   "Accepts a function and creates cached version of it which uses Caffeine Loading Cache.
@@ -78,8 +80,8 @@
     (fn [& args]
       (let [key (or args [])]
         (if condition-fn
-          (fetch cache key condition-fn f args)
-          (fetch cache key))))))
+          (cond-lookup cache key condition-fn f args)
+          (lookup cache key))))))
 
 (defmacro defcached
   "Creates a function which uses Caffeine Loading Cache under the hood.

@@ -12,9 +12,8 @@
   (when (and (:soft-values options) (:weak-values options))
     (throw (IllegalArgumentException. "Only soft-values or weak-values options can be used "))))
 
-(defn cached
-  "Accepts a function and creates cached version of it which uses Caffeine Loading Cache.
-  Cache options can be provided as meta to function. Supported options are:
+(defn build-cache
+  "Builds Caffeine Loading Cache with given options and optional cache loader. Supported options are:
   `:expire` - expiration time after write (in seconds)
   `:expire-after-access` - expiration time after access (in seconds)
   `:refresh` - refresh time (in seconds)
@@ -23,20 +22,10 @@
   `:weak-keys` - boolean, switch cache to using weak references for keys
   `:weak-values` - boolean, switch cache to using weak references for values (can't be set together with `:soft-values`)
   `:soft-values` - boolean, switch cache to using soft references for values (can't be set together with `:weak-values`)
-
-  Examples:
-  (cached ^{:expire 86400 :refresh 36000}
-   (fn [db id] (query db id)))
-
-  ;; calculate todays order capacity until it reaches zero
-  (cached ^{:when zero?}
-   (fn [db worker-id] (order-capacity db worker-id)))
   "
-  [f]
-  (let [options (meta f)
-        _ (check-cache-options options)
+  [options & [loader]]
+  (let [_ (check-cache-options options)
         {:keys [expire expire-after-access refresh max-size weak-keys weak-values soft-values]} options
-        condition-fn (-> f meta :when)
         ^Caffeine cache-builder (cond-> (Caffeine/newBuilder)
                                   expire
                                   (.expireAfterWrite (Duration/ofSeconds expire))
@@ -51,20 +40,42 @@
                                   weak-values
                                   (.weakValues)
                                   soft-values
-                                  (.softValues))
-        cache (if condition-fn
-                (.build cache-builder)
-                (.build cache-builder (reify CacheLoader (load [_ key] (apply f key)))))]
-    (if condition-fn
-      (fn [& args]
-        (let [key (or args [])]
-          (or (.getIfPresent ^Cache cache key)
-              (let [computed (apply f args)]
-                (when (condition-fn computed)
-                  (.put ^Cache cache key computed))
-                computed))))
-      (fn [& args]
-        (.get ^LoadingCache cache (or args []))))))
+                                  (.softValues))]
+    (if loader
+      (.build cache-builder ^CacheLoader loader)
+      (.build cache-builder))))
+
+(defn fetch
+  "Performs cache lookup and optional conditional value computation if value is missing"
+  ([^LoadingCache cache key] (.get cache key))
+  ([^Cache cache key condition-fn computation-fn args]
+   (or (.getIfPresent cache key)
+       (let [computed (apply computation-fn args)]
+         (when (condition-fn computed)
+           (.put cache key computed))
+         computed))))
+
+(defn cached
+  "Accepts a function and creates cached version of it which uses Caffeine Loading Cache.
+  Cache options can be provided as meta to function. See `build-cache` documentation for the list of supported-options.
+  Examples:
+  (cached ^{:expire 86400 :refresh 36000}
+   (fn [db id] (query db id)))
+
+  ;; calculate todays order capacity until it reaches zero
+  (cached ^{:when zero?}
+   (fn [db worker-id] (order-capacity db worker-id)))
+  "
+  [f]
+  (let [options (meta f)
+        condition-fn (-> f meta :when)
+        loader (when-not condition-fn (reify CacheLoader (load [_ key] (apply f key))))
+        cache (build-cache options loader)]
+    (fn [& args]
+      (let [key (or args [])]
+        (if condition-fn
+          (fetch cache key condition-fn f args)
+          (fetch cache key))))))
 
 (defmacro defcached
   "Creates a function which uses Caffeine Loading Cache under the hood.

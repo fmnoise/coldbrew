@@ -1,6 +1,6 @@
 (ns fmnoise.coldbrew
   {:clj-kondo/config '{:lint-as {fmnoise.coldbrew/defached clojure.core/defn}}}
-  (:import (com.github.benmanes.caffeine.cache Cache CacheLoader LoadingCache Caffeine)
+  (:import (com.github.benmanes.caffeine.cache Cache CacheLoader LoadingCache Caffeine RemovalListener)
            (java.time Duration))
   (:require [clojure.set :as set]
             [clojure.string :as str]))
@@ -25,10 +25,12 @@
   `:weak-keys` - boolean, switch cache to using weak references for keys
   `:weak-values` - boolean, switch cache to using weak references for values (can't be set together with `:soft-values`)
   `:soft-values` - boolean, switch cache to using soft references for values (can't be set together with `:weak-values`)
+  `:eviction-listener` - function of three parameters (key, value, cause) that is called synchronously when a cache entry is evicted (due to policy)
+  `:removal-listener` - function of three parameters (key, value, cause) that is called asynchronously when a cache entry is removed (invalidated or evicted)
   "
   [options & [cache-fn]]
   (let [_ (check-cache-options options)
-        {:keys [expire expire-after-access refresh max-size weak-keys weak-values soft-values]} options
+        {:keys [expire expire-after-access refresh max-size weak-keys weak-values soft-values eviction-listener removal-listener]} options
         ^Caffeine cache-builder (cond-> (Caffeine/newBuilder)
                                   expire
                                   (.expireAfterWrite (Duration/ofSeconds expire))
@@ -43,7 +45,17 @@
                                   weak-values
                                   (.weakValues)
                                   soft-values
-                                  (.softValues))]
+                                  (.softValues)
+                                  eviction-listener
+                                  (.evictionListener
+                                   (reify RemovalListener
+                                     (onRemoval [this key value cause]
+                                       (eviction-listener key value cause))))
+                                  removal-listener
+                                  (.removalListener
+                                   (reify RemovalListener
+                                     (onRemoval [this key value cause]
+                                       (removal-listener key value cause)))))]
     (if cache-fn
       (.build cache-builder (cache-loader cache-fn))
       (.build cache-builder))))

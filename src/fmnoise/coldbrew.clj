@@ -2,9 +2,11 @@
   {:clj-kondo/config '{:lint-as {fmnoise.coldbrew/defached clojure.core/defn}}}
   (:import (com.github.benmanes.caffeine.cache Cache CacheLoader LoadingCache Caffeine RemovalListener Scheduler)
            (java.time Duration)
-           (java.util.concurrent Executor))
+           (java.util.concurrent Executor)
+           (java.util.function Function))
   (:require [clojure.set :as set]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:refer-clojure :exclude [get]))
 
 (defn- check-cache-options [options]
   (let [diff (set/difference (some-> options keys set) #{:expire :expire-after-access :initial-capacity :scheduler :executor :refresh :when :max-size
@@ -95,7 +97,7 @@
   ([^Cache cache key]
    (.getIfPresent cache key))
   ([^Cache cache key f]
-   (.get cache key ^Function f)))
+   (.get cache key (reify Function (apply [this key] (f key))))))
 
 (defn lookup
   "Performs cache lookup. Accepts optional 0-arity function to calculate missing value"

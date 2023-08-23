@@ -1,12 +1,14 @@
 (ns fmnoise.coldbrew
   {:clj-kondo/config '{:lint-as {fmnoise.coldbrew/defached clojure.core/defn}}}
-  (:import (com.github.benmanes.caffeine.cache Cache CacheLoader LoadingCache Caffeine RemovalListener)
-           (java.time Duration))
+  (:import (com.github.benmanes.caffeine.cache Cache CacheLoader LoadingCache Caffeine RemovalListener Scheduler)
+           (java.time Duration)
+           (java.util.concurrent Executor))
   (:require [clojure.set :as set]
             [clojure.string :as str]))
 
 (defn- check-cache-options [options]
-  (let [diff (set/difference (some-> options keys set) #{:expire :expire-after-access :refresh :when :max-size :weak-keys :weak-values :soft-values :eviction-listener :removal-listener})]
+  (let [diff (set/difference (some-> options keys set) #{:expire :expire-after-access :initial-capacity :scheduler :executor :refresh :when :max-size
+                                                         :weak-keys :weak-values :soft-values :eviction-listener :removal-listener})]
     (when (seq diff)
       (throw (IllegalArgumentException. (str "Unsupported caching options: " (str/join "," diff))))))
   (when (and (:soft-values options) (:weak-values options))
@@ -19,6 +21,9 @@
   "Builds Caffeine Loading Cache with given options and optional cache function. Supported options are:
   `:expire` - expiration time after write (in seconds)
   `:expire-after-access` - expiration time after access (in seconds)
+  `:initial-capacity` - initial capacity of internal data structure
+  `:scheduler` - Routine cache maintenance scheduler
+  `:executor` - Executor for `:removal-listener`, periodic maintenance or refreshes
   `:refresh` - refresh time (in seconds)
   `:when` - function for checking if value should be cached
   `:max-size` - number, sets maximum cache size
@@ -26,16 +31,22 @@
   `:weak-values` - boolean, switch cache to using weak references for values (can't be set together with `:soft-values`)
   `:soft-values` - boolean, switch cache to using soft references for values (can't be set together with `:weak-values`)
   `:eviction-listener` - function of three parameters (key, value, cause) that is called synchronously when a cache entry is evicted (due to policy)
-  `:removal-listener` - function of three parameters (key, value, cause) that is called asynchronously when a cache entry is removed (invalidated or evicted)
+  `:removal-listener` - function of three parameters (key, value, cause) that is called asynchronously (using `:executor`, if given) when a cache entry is removed (invalidated or evicted)
   "
   [options & [cache-fn]]
   (let [_ (check-cache-options options)
-        {:keys [expire expire-after-access refresh max-size weak-keys weak-values soft-values eviction-listener removal-listener]} options
+        {:keys [expire expire-after-access initial-capacity scheduler executor refresh max-size weak-keys weak-values soft-values eviction-listener removal-listener]} options
         ^Caffeine cache-builder (cond-> (Caffeine/newBuilder)
                                   expire
                                   (.expireAfterWrite (Duration/ofSeconds expire))
                                   expire-after-access
                                   (.expireAfterAccess (Duration/ofSeconds expire-after-access))
+                                  initial-capacity
+                                  (.initialCapacity (int initial-capacity))
+                                  scheduler
+                                  (.scheduler ^Scheduler scheduler)
+                                  executor
+                                  (.executor ^Executor executor)
                                   refresh
                                   (.refreshAfterWrite (Duration/ofSeconds refresh))
                                   max-size

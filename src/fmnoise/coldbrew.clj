@@ -71,6 +71,32 @@
       (.build cache-builder (cache-loader cache-fn))
       (.build cache-builder))))
 
+(defn put
+  "Insert/update a cache entry."
+  [^Cache cache key val]
+  (.put cache key val))
+
+(defn put-all
+  "Insert/update multiple cache entries.
+  `m` is a map of key -> value."
+  [^Cache cache m]
+  (.putAll cache m))
+
+(defn invalidate
+  "Invalidate a cache entry."
+  [^Cache cache key]
+  (.invalidate cache key))
+
+(defn get
+  "Lookup cache entry by key, optionally computing and inserting a value if missing.
+
+  Returns `nil` if `key` does not exist and `f` is not provided.
+  Otherwise, `key`, `(f key)` is inserted into the cache and the resulting value is returned."
+  ([^Cache cache key]
+   (.getIfPresent cache key))
+  ([^Cache cache key f]
+   (.get cache key ^Function f)))
+
 (defn lookup
   "Performs cache lookup. Accepts optional 0-arity function to calculate missing value"
   ([^LoadingCache cache key] (.get cache key))

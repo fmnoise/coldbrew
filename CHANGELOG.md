@@ -1,5 +1,18 @@
 # Change Log
 
+## Unreleased
+
+* Add support for cache configuration:
+  * scheduler
+  * executor
+  * eviction/removal listeners
+  * initial capacity
+* Add more caffeine function wrappers
+  * get (.get, .getIfPresent)
+  * invalidate
+  * put
+  * put-all (.putAll)
+
 ## 1.1.0 - 2023-01-31
 
 * Update defcached docstring

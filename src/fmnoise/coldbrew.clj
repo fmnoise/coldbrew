@@ -6,7 +6,7 @@
             [clojure.string :as str]))
 
 (defn- check-cache-options [options]
-  (let [diff (set/difference (some-> options keys set) #{:expire :expire-after-access :refresh :when :max-size :weak-keys :weak-values :soft-values})]
+  (let [diff (set/difference (some-> options keys set) #{:expire :expire-after-access :refresh :when :max-size :weak-keys :weak-values :soft-values :eviction-listener :removal-listener})]
     (when (seq diff)
       (throw (IllegalArgumentException. (str "Unsupported caching options: " (str/join "," diff))))))
   (when (and (:soft-values options) (:weak-values options))

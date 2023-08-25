@@ -5,8 +5,7 @@
            (java.util.concurrent Executor)
            (java.util.function Function))
   (:require [clojure.set :as set]
-            [clojure.string :as str])
-  (:refer-clojure :exclude [get]))
+            [clojure.string :as str]))
 
 (def ^:private cache-options
   #{:expire
@@ -103,24 +102,18 @@
   [^Cache cache key]
   (.invalidate cache key))
 
-(defn get
-  "Lookup cache entry by key, optionally computing and inserting a value if missing.
-
-  Returns `nil` if `key` does not exist and `f` is not provided.
-  Otherwise, `key`, `(f key)` is inserted into the cache and the resulting value is returned."
-  ([^Cache cache key]
-   (.getIfPresent cache key))
-  ([^Cache cache key f]
-   (.get cache key (reify Function (apply [this key] (f key))))))
-
 (defn lookup
-  "Performs cache lookup. Accepts optional 0-arity function to calculate missing value"
-  ([^LoadingCache cache key] (.get cache key))
+  "Performs cache lookup. Accepts optional function which uses cache key to calculate missing value"
+  ([^Cache cache key]
+   (if (instance? LoadingCache cache)
+     (.get cache key)
+     (.getIfPresent cache key)))
   ([^Cache cache key f]
-   (or (.getIfPresent cache key)
-       (let [computed (f)]
-         (.put cache key computed)
-         computed))))
+   (.get cache key (reify Function (apply [_ key] (f key))))))
+
+(defn lookup-some
+  "Performs cache lookup for existing value"
+  [^Cache cache key] (.getIfPresent cache key))
 
 (defn cond-lookup
   "Performs cache lookup and conditional value computation if value is missing"

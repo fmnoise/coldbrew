@@ -8,9 +8,23 @@
             [clojure.string :as str])
   (:refer-clojure :exclude [get]))
 
+(def ^:private cache-options
+  #{:expire
+    :expire-after-access
+    :initial-capacity
+    :scheduler
+    :executor
+    :refresh
+    :when
+    :max-size
+    :weak-keys
+    :weak-values
+    :soft-values
+    :eviction-listener
+    :removal-listener})
+
 (defn- check-cache-options [options]
-  (let [diff (set/difference (some-> options keys set) #{:expire :expire-after-access :initial-capacity :scheduler :executor :refresh :when :max-size
-                                                         :weak-keys :weak-values :soft-values :eviction-listener :removal-listener})]
+  (let [diff (set/difference (some-> options keys set) cache-options)]
     (when (seq diff)
       (throw (IllegalArgumentException. (str "Unsupported caching options: " (str/join "," diff))))))
   (when (and (:soft-values options) (:weak-values options))
@@ -62,12 +76,12 @@
                                   eviction-listener
                                   (.evictionListener
                                    (reify RemovalListener
-                                     (onRemoval [this key value cause]
+                                     (onRemoval [_ key value cause]
                                        (eviction-listener key value cause))))
                                   removal-listener
                                   (.removalListener
                                    (reify RemovalListener
-                                     (onRemoval [this key value cause]
+                                     (onRemoval [_ key value cause]
                                        (removal-listener key value cause)))))]
     (if cache-fn
       (.build cache-builder (cache-loader cache-fn))

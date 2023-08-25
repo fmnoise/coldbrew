@@ -106,7 +106,7 @@
   "Performs cache lookup. Accepts optional function which uses cache key to calculate missing value"
   ([^Cache cache key]
    (if (instance? LoadingCache cache)
-     (.get cache key)
+     (.get ^LoadingCache cache key)
      (.getIfPresent cache key)))
   ([^Cache cache key f]
    (.get cache key (reify Function (apply [_ key] (f key))))))

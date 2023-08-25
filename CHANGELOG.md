@@ -1,17 +1,45 @@
 # Change Log
 
-## Unreleased
+## 1.3.0
 
+* **BREAKING!** `lookup` should accept 1-arity function
+* Add `lookup-some` (`.getIfPresent`)
+* `lookup` now uses `.get` for LoadingCache and `.getIfPresent` otherwise
 * Add support for cache configuration:
   * scheduler
   * executor
   * eviction/removal listeners
   * initial capacity
 * Add more caffeine function wrappers
-  * get (.get, .getIfPresent)
-  * invalidate
-  * put
-  * put-all (.putAll)
+  * `invalidate`
+  * `put`
+  * `put-all` (`.putAll`)
+
+## 1.2.1 - 2023-05-22
+
+* Additional arity for `lookup`
+
+## 1.2.0 - 2023-05-22
+
+* Fix building cache
+* **BREAKING!**  remove `fetch`, introduce `lookup` and `cond-lookup`
+* **BREAKING!** `build-cache` should accept function instead of loader
+
+## 1.1.4 - 2023-05-22
+
+* Use Clojure 1.9
+
+## 1.1.3 - 2023-05-22
+
+* Additional arities for `fetch`
+
+## 1.1.2 - 2023-05-22
+
+* Add `build-cache` and `fetch`
+
+## 1.1.1 - 2023-02-16
+
+* Remove clojure macro meta from options
 
 ## 1.1.0 - 2023-01-31
 

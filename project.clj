@@ -4,4 +4,4 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :url "https://github.com/fmnoise/coldbrew"
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [com.github.ben-manes.caffeine/caffeine "3.0.4"]])
+                 [com.github.ben-manes.caffeine/caffeine "3.1.8"]])

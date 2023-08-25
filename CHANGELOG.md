@@ -1,6 +1,6 @@
 # Change Log
 
-## 1.3.0
+## 1.3.0 - 2023-08-25
 
 * **BREAKING!** `lookup` should accept 1-arity function
 * Add `lookup-some` (`.getIfPresent`)
@@ -14,6 +14,7 @@
   * `invalidate`
   * `put`
   * `put-all` (`.putAll`)
+* Caffeine 3.1.8
 
 ## 1.2.1 - 2023-05-22
 

@@ -1,6 +1,7 @@
 (ns fmnoise.coldbrew-test
   (:require [clojure.test :refer [deftest is]]
-            [fmnoise.coldbrew :refer [defcached cached]]))
+            [fmnoise.coldbrew :refer [defcached cached] :as cb])
+  (:import (com.github.benmanes.caffeine.cache Cache)))
 
 (deftest cached-fn-test
   (let [counter (atom 0)
@@ -14,6 +15,9 @@
         c3 @counter
         r4 (cf 2 3)
         c4 @counter]
+    (is (and (instance? Cache (::cb/cache (meta cf)))
+             (instance? Cache (cb/cached-cache cf)))
+        "meta attached correctly")
     (is (= 3 r1 r2 r3) "function produces correct result")
     (is (= 1 c1 c2) "counter is affected only on first run")
     (is (= 2 c3) "counter is affected after expiration")
@@ -71,14 +75,14 @@
       (is (= 0 @store) "function body isn't called"))))
 
 (deftest defcached-declaration-test
-  (defcached f1 [a b]
-      ^{:expire 10} [a b]
-      (- a b)
-      (+ a b))
+  (defcached ^:test-meta f1 [a b]
+    ^{:expire 10} [a b]
+    (- a b)
+    (+ a b))
   (defcached f2 "adds a and b" [a b]
-      ^{:expire 10} [a b]
-      (- a b)
-      (+ a b))
+    ^{:expire 10} [a b]
+    (- a b)
+    (+ a b))
   (defcached f3 [a b]
     {:pre [(pos? a) (pos? b)]}
     ^{:expire 10} [a b]
@@ -89,6 +93,10 @@
     ^{:expire 10} [a b]
     (- a b)
     (+ a b))
+  (is (and (:test-meta (meta #'f1))
+           (instance? Cache (::cb/cache (meta #'f1)))
+           (instance? Cache (cb/defcached-cache f1)))
+      "meta attached correctly")
   (is (= 3 (f1 1 2) (f2 1 2) (f3 1 2) (f4 1 2)) "function produces correct result")
   (is (= "adds a and b" (:doc (meta #'f2)) (:doc (meta #'f4))) "docstring is added to function meta")
   (is (thrown? AssertionError (f3 0 0)) "pre-conditions are added to function")

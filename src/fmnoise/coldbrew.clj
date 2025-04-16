@@ -86,6 +86,11 @@
       (.build cache-builder (cache-loader cache-fn))
       (.build cache-builder))))
 
+(defn cache-keys
+  "Returns a list of cache keys"
+  [^Cache cache]
+  (.keySet (.asMap cache)))
+
 (defn put
   "Insert/update a cache entry."
   [^Cache cache key val]
@@ -101,6 +106,11 @@
   "Invalidate a cache entry."
   [^Cache cache key]
   (.invalidate cache key))
+
+(defn invalidate-keys
+  "Invalidate a cache entries."
+  [^Cache cache keys]
+  (.invalidateAll cache keys))
 
 (defn lookup
   "Performs cache lookup. Accepts optional function which uses cache key to calculate missing value"
@@ -139,11 +149,15 @@
   (let [options (meta f)
         condition-fn (-> f meta :when)
         cache (build-cache options (when-not condition-fn f))]
+    ^{::cache cache}
     (fn [& args]
       (let [key (or args [])]
         (if condition-fn
           (cond-lookup cache key condition-fn f args)
           (lookup cache key))))))
+
+(defn cached-cache [cached-fn]
+  (-> (meta cached-fn) ::cache))
 
 (defmacro defcached
   "Creates a function which uses Caffeine Loading Cache under the hood.
@@ -181,11 +195,14 @@
                               :else 3))
         fdefn (filter some? (list name docstring args prepost))]
     `(do
-      (def ^:private ~fname
-         (cached
-          (with-meta
-            (fn [~@cache-key]
-              ~@body)
-            ~cache-options)))
-      (defn ~@fdefn (~fname ~@cache-key))
-      (vary-meta ~name merge ~(meta name)))))
+       (def ^:private ~fname (cached
+                              (with-meta
+                                (fn [~@cache-key]
+                                  ~@body)
+                                ~cache-options)))
+       (defn ~@fdefn (~fname ~@cache-key))
+       (alter-meta! (var ~name) merge (meta ~fname) ~(meta name)))))
+
+(defmacro defcached-cache [defcache-fn]
+  `(cached-cache (var ~defcache-fn)))
+

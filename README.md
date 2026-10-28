@@ -50,13 +50,15 @@ We can also configure that the value should be cached only when it has satisfied
 ```
 
 There's also a more flexible `defcached` macro which uses `cached` under the hood.
-The main purpose of it is ability to build cache keys from function agruments:
+The main purpose of it is the ability to build cache keys from function arguments.
+The body runs in an internal function whose arguments are the cache key bindings.
+Include every argument binding used by the body in the key, including values extracted by destructuring:
 
 ```clojure
 (defcached fetch-customer ;; function name
   [{:keys [base-url timeout]} id] ;; function args
   ^{:expire 3600} ;; cache options passed as meta attached to cache key
-  [id] ;; cache key - a vector which will become args for internal caching function
+  [base-url timeout id] ;; bindings available to the cached body
   ;; function body
   (let [result (deref (http/get (str base-url "/customer/" id)) timeout ::timeout)]
     (if (= result ::timeout)
@@ -71,7 +73,7 @@ All meta passed to function name is preserved, so we can have private cached fun
     :doc "Fetches customer with given id"}
   fetch-customer-impl [{:keys [base-url timeout]} id]
   ^{:expire 3600}
-  [id]
+  [base-url timeout id]
   (let [result (deref (http/get (str base-url "/customer/" id)) timeout ::timeout)]
     (if (= result ::timeout)
       (throw (ex-info "Request timed out" {:id id}))
@@ -85,7 +87,7 @@ Positional docstring as well as `pre`/`post` conditions map are also supported:
   [{:keys [base-url timeout]} id]
   {:pre [(string? base-url) (pos? timeout) (some? id)]}
   ^{:expire 3600}
-  [id]
+  [base-url timeout id]
   (let [result (deref (http/get (str base-url "/customer/" id)) timeout ::timeout)]
     (if (= result ::timeout)
       (throw (ex-info "Request timed out" {:id id}))
@@ -116,3 +118,15 @@ Coldbrew icon made by [Freepik](https://www.freepik.com) from [Flaticon](https:/
 Copyright © 2021 fmnoise
 
 Distributed under the [Eclipse Public License 2.0](http://www.eclipse.org/legal/epl-2.0)
+
+## Cache behavior and testing
+
+- Non-nil results, including `false`, can be cached. Nil results are returned without caching.
+- Conditional caching (`:when`) serializes computation for the same key. Rejected results are not stored, so waiting callers may recompute them.
+- `:when` and `:refresh` cannot be combined. Refresh requires a loading cache.
+- `:weak-keys` is available through `build-cache`, but rejected by `cached` and `defcached` because they create argument keys on each call.
+- `build-cache` constructs a cache; its `:when` option does not filter direct writes or loader results.
+- `:ticker` accepts a Caffeine `Ticker` for deterministic time-based tests.
+- Keys passed to a loading cache built with `build-cache` are argument sequences applied to its cache function.
+
+Run the test suite with `lein test`. Time-based tests use a controlled ticker instead of sleeping.

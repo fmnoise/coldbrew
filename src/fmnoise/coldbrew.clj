@@ -1,9 +1,9 @@
 (ns fmnoise.coldbrew
-  {:clj-kondo/config '{:lint-as {fmnoise.coldbrew/defached clojure.core/defn}}}
-  (:import (com.github.benmanes.caffeine.cache Cache CacheLoader LoadingCache Caffeine RemovalListener Scheduler)
+  {:clj-kondo/config '{:lint-as {fmnoise.coldbrew/defcached clojure.core/defn}}}
+  (:import (com.github.benmanes.caffeine.cache Cache CacheLoader LoadingCache Caffeine RemovalListener Scheduler Ticker)
            (java.time Duration)
            (java.util.concurrent Executor)
-           (java.util.function Function))
+           (java.util.function BiFunction Function))
   (:require [clojure.set :as set]
             [clojure.string :as str]))
 
@@ -13,6 +13,7 @@
     :initial-capacity
     :scheduler
     :executor
+    :ticker
     :refresh
     :when
     :max-size
@@ -26,6 +27,8 @@
   (let [diff (set/difference (some-> options keys set) cache-options)]
     (when (seq diff)
       (throw (IllegalArgumentException. (str "Unsupported caching options: " (str/join "," diff))))))
+  (when (and (:when options) (:refresh options))
+    (throw (IllegalArgumentException. ":when and :refresh cannot be used together")))
   (when (and (:soft-values options) (:weak-values options))
     (throw (IllegalArgumentException. "Only soft-values or weak-values options can be used "))))
 
@@ -39,8 +42,9 @@
   `:initial-capacity` - initial capacity of internal data structure
   `:scheduler` - Routine cache maintenance scheduler
   `:executor` - Executor for `:removal-listener`, periodic maintenance or refreshes
-  `:refresh` - refresh time (in seconds)
-  `:when` - function for checking if value should be cached
+  `:ticker` - Ticker used to measure elapsed time
+  `:refresh` - refresh time (in seconds); requires a cache function and cannot be combined with `:when`
+  `:when` - predicate used by `cached` and `cond-lookup`; not applied by `build-cache`
   `:max-size` - number, sets maximum cache size
   `:weak-keys` - boolean, switch cache to using weak references for keys
   `:weak-values` - boolean, switch cache to using weak references for values (can't be set together with `:soft-values`)
@@ -50,7 +54,9 @@
   "
   [options & [cache-fn]]
   (let [_ (check-cache-options options)
-        {:keys [expire expire-after-access initial-capacity scheduler executor refresh max-size weak-keys weak-values soft-values eviction-listener removal-listener]} options
+        _ (when (and (:refresh options) (not cache-fn))
+            (throw (IllegalArgumentException. ":refresh requires a cache function")))
+        {:keys [expire expire-after-access initial-capacity scheduler executor ticker refresh max-size weak-keys weak-values soft-values eviction-listener removal-listener]} options
         ^Caffeine cache-builder (cond-> (Caffeine/newBuilder)
                                   expire
                                   (.expireAfterWrite (Duration/ofSeconds expire))
@@ -62,6 +68,8 @@
                                   (.scheduler ^Scheduler scheduler)
                                   executor
                                   (.executor ^Executor executor)
+                                  ticker
+                                  (.ticker ^Ticker ticker)
                                   refresh
                                   (.refreshAfterWrite (Duration/ofSeconds refresh))
                                   max-size
@@ -116,17 +124,28 @@
   [^Cache cache key] (.getIfPresent cache key))
 
 (defn cond-lookup
-  "Performs cache lookup and conditional value computation if value is missing"
+  "Looks up a value or computes it atomically for the key.
+  Non-nil values satisfying condition-fn are cached, including false.
+  Rejected values and nil are returned without caching; waiting callers may recompute them."
   [^Cache cache key condition-fn computation-fn & [args]]
-  (or (.getIfPresent cache key)
-      (let [computed (apply computation-fn args)]
-        (when (condition-fn computed)
-          (.put cache key computed))
-        computed)))
+  (if-some [existing (.getIfPresent cache key)]
+    existing
+    (let [result (volatile! nil)]
+      (.compute (.asMap cache) key
+                (reify BiFunction
+                  (apply [_ _ existing]
+                    (if (some? existing)
+                      (do (vreset! result existing) existing)
+                      (let [computed (apply computation-fn args)]
+                        (vreset! result computed)
+                        (when (and (some? computed) (condition-fn computed))
+                          computed))))))
+      @result)))
 
 (defn cached
   "Accepts a function and creates cached version of it which uses Caffeine Loading Cache.
   Cache options can be provided as meta to function. See `build-cache` documentation for the list of supported-options.
+  Nil results are never cached. Weak keys are unsupported because argument keys are created per call.
   Examples:
   (cached ^{:expire 86400 :refresh 36000}
    (fn [db id] (query db id)))
@@ -137,7 +156,9 @@
   "
   [f]
   (let [options (meta f)
-        condition-fn (-> f meta :when)
+        _ (when (:weak-keys options)
+            (throw (IllegalArgumentException. ":weak-keys is not supported by cached or defcached")))
+        condition-fn (:when options)
         cache (build-cache options (when-not condition-fn f))]
     (fn [& args]
       (let [key (or args [])]
@@ -153,7 +174,7 @@
   - args (vector)
   - pre/post conditions map (optional)
   - caching key (vector) with optional meta containing cache options (see `cached` for more details)
-  - body
+  - body, whose argument bindings must all be present in the caching key
 
   Example:
   (defcached customer-lifetime-value [db date {:customer/keys [id]}]
